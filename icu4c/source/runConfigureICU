@@ -53,6 +53,7 @@ The following names can be supplied as the argument for platform:
     Linux/VA            Use the IBM XL compiler on Power PC Linux
     MacOSX              Use the default compilers on MacOS X (Darwin)
     MacOSX/GCC          Use the GNU gcc/g++ compilers on MacOSX (Darwin)
+    MacOSX/ICC          Use the Intel ICC compiler on MacOSX (Darwin)
     MinGW               Use the GNU gcc/g++ compilers on MinGW
     MSYS/MSVC           Use the Microsoft Visual C++ compiler on MSYS
     QNX                 Use the QNX QCC compiler on QNX/Neutrino
@@ -324,6 +325,28 @@ case $platform in
         DEBUG_CXXFLAGS='-g -O0'
         CC=gcc; export CC
         CXX=g++; export CXX
+        ;;
+    MacOSX/ICC)
+        RELEASE_CFLAGS='-O2'
+        RELEASE_CXXFLAGS='-O2 -Qoption,cpp,--unicode_source_kind,UTF-8'
+        DEBUG_CFLAGS='-g -O0'
+        DEBUG_CXXFLAGS='-O2 -Qoption,cpp,--unicode_source_kind,UTF-8'
+        CC=icc; export CC
+        CPP="icc -E"; export CPP
+        CXX=icpc; export CXX
+        ICC_VER=`icc --version | awk -F "(ICC)) 20[0-9]{2}[.*].{4}" '{print $2}' | rev | cut -c 5- | rev`
+		echo "Intel C++ Compiler Classic does not parse UTF-8 characters without explicitly specifying- appending flag '--unicode_source_kind,"UTF-8"' to CXXFLAGS"
+		echo
+    if [ "${ICC_VER}" -lt 2011 ]; then
+        RELEASE_CFLAGS='-O0'
+        RELEASE_CXXFLAGS='-O0 -Qoption,cpp,--unicode_source_kind,UTF-8'
+        DEBUG_CFLAGS='-g -O0'
+        DEBUG_CXXFLAGS='-g -O0 -Qoption,cpp,--unicode_source_kind,UTF-8'
+		export CFLAGS='${CFLAGS} -O0 -Qoption,cpp,--unicode_source_kind,UTF-8'
+		export CXXFLAGS='${CXXFLAGS} -O0 -Qoption,cpp,--unicode_source_kind,UTF-8'
+		echo "ICC 9.0 does not work with optimization- disabling optimizations"
+	fi
+        THE_COMP="Intel ${ICC_VER}"
         ;;
     MinGW)
         THE_OS="MinGW"
